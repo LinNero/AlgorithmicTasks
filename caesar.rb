@@ -1,44 +1,67 @@
-# require 'debug'
-
 class CaesarCipher
-  def encrypt_file(file_name, key)
-    @file = File.new(file_name, 'r+')
-    content = @file.readlines.map(&:chomp)
-    new_content = []
-    content.each do |string|
-      new_string = ''
-      string.chars.each do |char|
-        new_char = (char.ord + key).chr
-        new_string << new_char
-      end
-      new_content << new_string
-    end
+  def initialize(key:)
+    @key = key
+  end
 
-    File.open('encrypted_file.txt', 'w') do |file|
-      file.puts(*new_content)
+  def encrypt_file(from_file:, to_file:)
+    process_file(from_file, to_file, :encrypt)
+  end
+
+  def decrypt_file(from_file:, to_file:)
+    process_file(from_file, to_file, :decrypt)
+  end
+
+  private
+
+  def process_file(from_file, to_file, processing)
+    content = read_file(from_file)
+
+    new_content = process_content(content: content, processing: processing)
+
+    write_file(to_file, new_content)
+  end
+
+  def key(processing:)
+    if processing == :encrypt
+      @key
+    else
+      -@key
     end
   end
 
-  def decrypt_file(file_name, key)
-    @file = File.new(file_name, 'r+')
-    content = @file.readlines.map(&:chomp)
+  def process_content(content:, processing:)
     new_content = []
     content.each do |string|
       new_string = ''
       string.chars.each do |char|
-        new_char = (char.ord - key).chr
+        new_char = (char.ord + key(processing: processing)).chr
         new_string << new_char
       end
       new_content << new_string
     end
 
-    File.open('decrypted_file.txt', 'w') do |file|
+    new_content
+  end
+
+  def read_file(from_file)
+    file = File.new(from_file, 'r+')
+    file.readlines.map(&:chomp)
+  end
+
+  def write_file(to_file, new_content)
+    File.open(to_file, 'w') do |file|
       file.puts(*new_content)
     end
   end
 end
 
-cipher = CaesarCipher.new
-cipher.encrypt_file('file_name.txt', 2)
-cipher.decrypt_file('encrypted_file.txt', 2)
+cipher = CaesarCipher.new(key: 2)
+cipher.encrypt_file(
+  from_file: 'file_name.txt',
+  to_file: 'encrypted_file.txt'
+)
 
+cipher.decrypt_file(
+  from_file: 'encrypted_file.txt',
+  to_file: 'decrypted_file.txt'
+)
